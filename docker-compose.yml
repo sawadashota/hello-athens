@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  athens:
+    image: gomods/athens:latest
+    environment:
+      ATHENS_STORAGE_TYPE: mongo
+      ATHENS_MONGO_STORAGE_URL: mongodb://mongo:27017
+    ports:
+      - 3000:3000
+    links:
+      - mongo
+
+  # Storage for athens
+  mongo:
+    image: mongo:4.0
+
+  # Download go modules from GitHub directory
+  app:
+    image: golang:1.12-stretch
+    environment:
+      GO111MODULE: "on"
+    links:
+      - athens
+    ports:
+      - 8080:8080
+    working_dir: /go/src/app
+    volumes:
+      - .:/go/src/app
+    command: go run main.go
+
+  # Download go modules from athens
+  app-with-athens:
+    image: golang:1.12-stretch
+    environment:
+      GO111MODULE: "on"
+      GOPROXY: http://athens:3000
+    links:
+      - athens
+    ports:
+      - 8081:8080
+    working_dir: /go/src/app
+    volumes:
+      - .:/go/src/app
+    command: go run main.go
