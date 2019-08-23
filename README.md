@@ -11,21 +11,18 @@ How to try
 $ docker-compose up -d
 ```
 
-Then, running Athens, MongoDB and 2 sample Go apps: `app` and `app-with-athens`.
-`app` and `app-with-athens` are same application but differ in downloading sources.
-`app` downloads go modules from GitHub directly. `app-with-athens` downloads them from Athens. And Athens downloads from GitHub if doesn't have cache.
+Then, running Athens and a sample a Go app.
+A Go app downloads them from Athens. And Athens downloads from GitHub if doesn't have cache.
 
 ```
 $ docker-compose ps
-             Name                           Command               State           Ports         
-------------------------------------------------------------------------------------------------
-hello-athens_app-with-athens_1   go run main.go                   Up      0.0.0.0:8081->8080/tcp
-hello-athens_app_1               go run main.go                   Up      0.0.0.0:8080->8080/tcp
-hello-athens_athens_1            /sbin/tini -- athens-proxy ...   Up      0.0.0.0:3000->3000/tcp
-hello-athens_mongo_1             docker-entrypoint.sh mongod      Up      27017/tcp   
+        Name                       Command               State           Ports         
+---------------------------------------------------------------------------------------
+hello-athens_app_1      go run main.go                   Up      0.0.0.0:8081->8080/tcp
+hello-athens_athens_1   /sbin/tini -- athens-proxy ...   Up      0.0.0.0:3000->3000/tcp
 ```
 
-Sample Go app uses `github.com/julienschmidt/httprouter`.
+Sample Go app uses [Gin](https://github.com/gin-gonic/gin).
 So app downloads it before running.
 
 You can see it as log.
@@ -33,52 +30,42 @@ You can see it as log.
 ```
 $ docker-compose logs app
 Attaching to hello-athens_app_1
-app_1              | go: finding github.com/julienschmidt/httprouter v1.2.0
-app_1              | go: downloading github.com/julienschmidt/httprouter v1.2.0
-app_1              | go: extracting github.com/julienschmidt/httprouter v1.2.0
-app_1              | 2019/08/02 23:04:29 starting HTTP server...
-
-$ docker-compose logs app-with-athens
-Attaching to hello-athens_app-with-athens_1
-app-with-athens_1  | go: finding github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | go: downloading github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | go: extracting github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | 2019/08/02 23:04:29 starting HTTP server...
+app_1     | go: finding github.com/ugorji/go v1.1.7
+app_1     | go: finding github.com/json-iterator/go v1.1.7
+app_1     | go: finding github.com/golang/protobuf v1.3.2
+app_1     | go: finding github.com/stretchr/testify v1.4.0
+...
+app_1     | [GIN-debug] GET    /                         --> main.main.func1 (3 handlers)
+app_1     | [GIN-debug] Environment variable PORT is undefined. Using port :8080 by default
+app_1     | [GIN-debug] Listening and serving HTTP on :8080
 ```
 
-Now 2 apps are same behavior.
-
-Next, down 2 apps.
+Next, down the app.
 
 ```
-$ docker-compose rm -s -f app app-with-athens
+$ docker-compose rm -s -f app
 ```
 
 And disconnect internet.
 
-Then, up 2 apps.
+Then, up the app.
 
 ```
-$ docker-compose up -d app app-with-athens
+$ docker-compose up -d app
 ```
 
-`app` fails to start because cannot download modules. 
+`app` download modules and serve successfully because Athens has the modules cache.
 
 ```
 $ docker-compose logs app
 Attaching to hello-athens_app_1
-app_1              | go: finding github.com/julienschmidt/httprouter v1.2.0
-app_1              | go: github.com/julienschmidt/httprouter@v1.2.0: unknown revision v1.2.0
-app_1              | go: error loading module requirements
-```
-
-On the other hand, `app-with-athens` serve successfully because Athens has the modules cache.
-
-```
-$ docker-compose logs app-with-athens
-Attaching to hello-athens_app-with-athens_1
-app-with-athens_1  | go: finding github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | go: downloading github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | go: extracting github.com/julienschmidt/httprouter v1.2.0
-app-with-athens_1  | 2019/08/02 23:18:06 starting HTTP server...
+app_1     | go: finding github.com/kr/pretty v0.1.0
+app_1     | go: finding github.com/ugorji/go v1.1.7
+app_1     | go: finding github.com/gin-gonic/gin v1.4.0
+app_1     | go: finding github.com/gin-contrib/sse v0.1.0
+app_1     | go: finding github.com/mattn/go-isatty v0.0.9
+...
+app_1     | [GIN-debug] GET    /                         --> main.main.func1 (3 handlers)
+app_1     | [GIN-debug] Environment variable PORT is undefined. Using port :8080 by default
+app_1     | [GIN-debug] Listening and serving HTTP on :8080
 ```
