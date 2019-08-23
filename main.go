@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+	"os"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 )
 
-func Index(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-	fmt.Fprintln(w, "Hello Athens!")
-}
-
 func main() {
-	router := httprouter.New()
-	router.GET("/", Index)
+	r := gin.Default()
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Hello Athens!",
+		})
+	})
 
-	log.Println("starting HTTP server...")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	if err := r.Run(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
