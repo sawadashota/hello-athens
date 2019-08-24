@@ -1,4 +1,4 @@
-module github.com/sawadashota/hello-athens
+module github.com/sawadashota/demo/shello-athens
 
 go 1.12
 
